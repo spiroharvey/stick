@@ -1,0 +1,88 @@
+Stick v1.0
+
+Copyright (c) 2013 SDG
+Written by Spiro Dotgeek
+
+EMAIL   : spiro@oldschool.geek.nz
+BBS     : tsd.oldschool.geek.nz
+
+
+
+Stick (Spiro's Tick) is a TIC file processor for Linux Bulletin Boards. 
+
+It is as dumb as a stick. 
+
+---=[ How dumb is it? ]=---
+
+Stick looks for *.tic files in your specified Inbound directory, moves the 
+associated file to the relevant file directory, and that's it.
+
+It's up to you to import the files into your BBS's file bases, most likely by
+running its mass upload feature.
+
+Stick is also too dumb to deal with descriptions. Most files will come in
+as archives with file_id.diz files anyway, so your BBS should deal with that.
+
+If Stick exists with an errorlevel of 2, then it has processed some TIC files
+and you can run your importer.
+
+eg; a simple bash script to import your files into Mystic might look like:
+
+#!/bin/bash
+stick -c /mbbs/stick.cfg
+if [ $? == 2 ]; then
+	/mbbs/mutil /mbbs/fileimport.ini
+fi
+
+Stick that in a cron job and Bob's your uncle.
+
+
+---=[ Config File ]=---
+
+By default, stick will look in the current directory for a file called
+'stick.cfg'. This can be over-ridden on the commandline with the 
+-c argument.
+
+The config file should have at least the INBOUND directory defined, and at
+least one AREANAME line. Everything else is optional.
+
+Options:
+--------
+
+INBOUND <inbound file echo directory>
+AREANAME <file echo name> <BBS destination directory>
+LOGFILE <logfile>
+DEBUG <[yes/no]|[0/1]|[on/off]>
+ANNOUNCE <filename>
+
+
+INBOUND     : this takes one parameter -- the incoming path that your mailer
+              deposits files int.
+AREANAME    : The first parameter is the network's file echo name;
+              eg; Agora's BBS Mods echo is called AGN_MODS
+              The second parameter is the path you want the files for that
+              echo deposited into.
+LOGFILE     : The full path to your log file. If this is not specified, Stick
+              will default to 'stick.log' in the current directory.
+DEBUG       : This turns on debugging, which puts more info in the log file,
+              such as the full source and destination paths of files being
+              imported.
+ANNOUNCE    : A filename to announce imports. This can then be imported into
+              a message board so your users know.
+
+Anything that's not a path-/file-name is case insensitive.
+
+Comments can be added by making the first character of each line a 
+semi-colon (;) or a hash (#). 
+
+
+============================================
+
+Things I'd like to add, but may not unless people ask nicely:
+
+ - Checking if the destination file already exists, and comparing that to
+   the TIC's Replace line.
+ - Adding a PostExec line in the cfg file to run if it hits that magical
+   errorlevel 2. However, this will take it one step closer to sentience.
+ - Feeding the descriptions to your postprocessor.
+

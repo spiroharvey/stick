@@ -1,0 +1,8 @@
+- PreExec <command> : to allow prescanning of file before it's passed to 
+  the file area, eg; virus scanning, bbs ad insertion
+- PostExec <command> : run some process if program ends with errorlevel 2
+  eg; has processed something
+- nodedir <dir> : directory dump incoming nodelist files
+- nodelist <filename> : look out for this file and dump it in nodedir
+  (as well as normal file base import)
+- headers/footers in announcement
