@@ -19,13 +19,13 @@ Type
 			Area	: String;
 			AreaDesc: String;
 			Desc	: String[80];
-			LDesc	: array[0..12] of String[80];
+			LDesc	: array [0..9] of String[80];
 			Size	: string;
 			Replaces: String;
 		End;
 
 Const
-		Version		: String = '1.0';
+		Version		: String = '1.1';
 
 Var
 		cfgFile		: String = 'stick.cfg';
@@ -34,15 +34,20 @@ Var
 		announce	: Boolean = False;
 		af,
 		lf			: Text;
+		quarDir		: String = '';
 		inDir		: String = '';
 		i,j			: integer;
 		Area		: AreaArray;
 		fileInfo	: TSearchRec;
 		tic			: TicRec;
+		tstr,
 		SrcFile,
 		DstFile		: String;
 		debug		: Boolean = false;
+		longdesc	: Boolean = true;
+		strictdiz	: Boolean = false;
 		gotfile		: Boolean = false;
+		quarantine	: Boolean = false;
 
 		dt			: double;
 		dyr,dmn,ddy,
@@ -54,7 +59,7 @@ Var
 		cf			: Text;
 		cc			: string;
 		tmpline		: string;
-		c,i,sLoc,a,f	: integer;
+		c,a			: integer;
 
 Begin
 	a := 0;
@@ -73,7 +78,6 @@ Begin
 					cc := copy(tmpline,c,1);
 					if cc = ' ' then begin
 						Area[a].Name := copy(tmpline,10,c-10);
-						sLoc := 11+c;
 						break;
 					end;
 				end;
@@ -93,12 +97,22 @@ Begin
 			end;
 
 			if upcase(leftstr(tmpline,6)) = 'DEBUG ' then begin
-				case copy(tmpline,7,length(tmpline)) of
+				case upcase(copy(tmpline,7,length(tmpline))) of
 					'1',
 					'YES',
 					'Y',
 					'ON',
 					'TRUE' : debug := true;
+				end;
+			end;
+
+			if upcase(leftstr(tmpline,9)) = 'LONGDESC ' then begin
+				case upcase(copy(tmpline,10,length(tmpline))) of
+					'0',
+					'NO',
+					'N',
+					'OFF',
+					'FALSE' : longdesc := false;
 				end;
 			end;
 
@@ -109,6 +123,30 @@ Begin
 					annFile := 'announce.txt';
 			end;
 
+			if upcase(leftstr(tmpline,10)) = 'STRICTDIZ ' then begin
+				case upcase(copy(tmpline,11,length(tmpline))) of
+					'1',
+					'YES',
+					'Y',
+					'ON',
+					'TRUE' : strictdiz := true;
+				end;
+			end;
+
+			if upcase(leftstr(tmpline,11)) = 'QUARANTINE ' then begin
+				quarantine := true;
+				quarDir := copy(tmpline,12,length(tmpline));
+				if RightStr(quarDir,1) <> '/' then
+					quarDir := quarDir + '/';
+				if not DirectoryExists(quarDir) then begin
+					if not CreateDir(quarDir) then begin
+						writeln('Can''t create Quarantine directory: ' + quarDir);
+						Close(cf);
+						halt(1);
+					end;
+				end;
+			end;
+
 		end;
 	end else begin
 		writeln('Can''t find config file: ' + cfgFile);
@@ -116,6 +154,7 @@ Begin
 	end;
 	if inDir = '' then begin
 		writeln('Error: Need an INBOUND directory.');
+		Close(cf);
 		halt(2);
 	end;
 	Close(cf);
@@ -126,7 +165,7 @@ Procedure ReadTicFile(FN : String);
 Var
 		tf			: Text;
 		tmpline		: string;
-		d			: integer = 1;
+		d			: integer = 0;
 		i			: integer;
 		
 Begin
@@ -148,8 +187,10 @@ Begin
 		if upcase(leftstr(tmpline,5)) = 'SIZE ' then
 			tic.Size := copy(tmpline,6,length(tmpline));
 		if upcase(leftstr(tmpline,6)) = 'LDESC ' then begin
-			//SetLength(tic.LDesc,d);
-			tic.LDesc[d] := copy(tmpline,7,length(tmpline));
+			if strictdiz then
+				tic.LDesc[d] := copy(tmpline,7,45)
+			else
+				tic.LDesc[d] := copy(tmpline,7,length(tmpline));
 			inc(d);
 		end;
 	end;
@@ -184,10 +225,12 @@ Begin
 					writeln('                [-d] to set debug mode');
 					writeln();
 					writeln('  configfile consists of:');
-					writeln('          INBOUND  <inbound path>');
-					writeln('          AREANAME <echoname> <file directory>');
-					writeln('          DEBUG    0/1 (optional)');
-					writeln('          ANNOUNCE  <filename>');
+					writeln('          INBOUND    <inbound path>');
+					writeln('          AREANAME   <echoname> <file directory>');
+					writeln('          DEBUG      on/off');
+					writeln('          LONGDESC   on/off');
+					writeln('          ANNOUNCE   <filename>');
+					writeln('          QUARANTINE <idirectory>');
 					writeln();
 					halt(0);
 					end;
@@ -242,13 +285,15 @@ Begin
 					DstFile := Area[i].Location+tic.FName;
 					if announce then begin
 		 				writeln(af,'>Area: ' + upcase(tic.Area) + ' // ' + tic.AreaDesc);
-						writeln(af,StringOfChar('-',78));
-						write(af,Format(' %0:-20s ',[tic.FName]));
-						write(af,Format(' %0:15s ',[tic.Size]));
+						writeln(af,' ' + StringOfChar('-',78));
+						write(af,Format('  %0:-15s ',[tic.FName]));
+						write(af,Format(' %0:12s  ',[tic.Size]));
 						writeln(af,tic.Desc);
-						for j := 0 to high(tic.LDesc) do begin
-							if tic.LDesc[j] <> '' then
-								writeln(af,StringOfChar(' ',30) + tic.LDesc[j]);
+						if longdesc then begin
+							for j := 0 to high(tic.LDesc) do begin
+								if tic.LDesc[j] <> '' then
+									writeln(af,StringOfChar(' ',33) + tic.LDesc[j]);
+							end;
 						end;
 						writeln(af,'');
 					end;
@@ -257,12 +302,14 @@ Begin
 						writeln(lf,'Destination File: ' + DstFile);
 					CopyFl(SrcFile,DstFile);
 					if FileExists(DstFile) then begin
+						if quarantine then begin
+						//	CopyFl(SrcFile,				quarDir+tic.FName);
+							CopyFl(inDir+fileInfo.Name,	quarDir+fileInfo.Name);
+						end;
 						DeleteFile(SrcFile);
-						if debug then
-							writeln(lf,'Move successful.');
+						if debug then writeln(lf,'Move successful.');
 						DeleteFile(inDir+fileInfo.Name);
-						if debug then
-							writeln(lf,'Deleted ' + fileInfo.Name);
+						if debug then writeln(lf,'Deleted ' + fileInfo.Name);
 						gotfile := true;
 					end;
 				end;
@@ -277,14 +324,18 @@ Begin
 		end;
 	End;
 	Close(lf);
-	if announce then begin
-		writeln(af,StringOfChar('-',78));
+
+	if announce and gotfile then begin
+		writeln(af,' ' + StringOfChar('-',78));
 		writeln(af,'');
-		writeln(af,'Files processed by Stick v' + Version + ' (c) 2013 by SDG');
-		writeln(af,'                    (spiro@oldschool.geek.nz)');
+		tstr := 'Files processed by Stick v' + Version + ' (c) 2013 by SDG';
+		writeln(af,StringOfChar(' ',78-length(tstr)) + tstr);
+		tstr := '(spiro@oldschool.geek.nz)';
+		writeln(af,StringOfChar(' ',78-length(tstr)) + tstr);
 		writeln(af,'');
-		Close(af);
 	end;
+
+	Close(af);
 
 	if gotfile then
 		halt(2);

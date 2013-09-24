@@ -1,4 +1,4 @@
-Stick v1.0
+Stick v1.1
 
 Copyright (c) 2013 SDG
 Written by Spiro Dotgeek
@@ -19,9 +19,6 @@ associated file to the relevant file directory, and that's it.
 
 It's up to you to import the files into your BBS's file bases, most likely by
 running its mass upload feature.
-
-Stick is also too dumb to deal with descriptions. Most files will come in
-as archives with file_id.diz files anyway, so your BBS should deal with that.
 
 If Stick exists with an errorlevel of 2, then it has processed some TIC files
 and you can run your importer.
@@ -52,11 +49,14 @@ Options:
 INBOUND <inbound file echo directory>
 AREANAME <file echo name> <BBS destination directory>
 LOGFILE <logfile>
-DEBUG <[yes/no]|[1/0]|[on/off]>
+DEBUG <on/off>
 ANNOUNCE <filename>
+LONGDESC <on/off>
+STRICTDIZ <on/off>
+QUARANTINE <directory>
 
 
-INBOUND     : this takes one parameter -- the incoming path that your mailer
+INBOUND     : This takes one parameter -- the incoming path that your mailer
               deposits files into.
 AREANAME    : The first parameter is the network's file echo name;
               eg; Agora's BBS Mods echo is called AGN_MODS
@@ -69,11 +69,20 @@ DEBUG       : This turns on debugging, which puts more info in the log file,
               imported.
 ANNOUNCE    : A filename to announce imports. This can then be imported into
               a message board so your users know.
+LONGDESC    : Turn long descriptions on or off in announcement file.
+              Default = on
+STRICTDIZ   : Force strict file_id.diz spec bounds for announcement file.
+              This restricts LDesc line lengths to 45 characters.
+QUARANTINE  : Copy all processed *.TIC files into a quarantine area for 
+              later checking. 
+              Directories will be created if necessary.
 
 Anything that's not a path-/file-name is case insensitive.
 
 Comments can be added by making the first character of each line a 
 semi-colon (;) or a hash (#). 
+
+Any options that take on/off, will also take yes/no, 1/0, y/n, true/false.
 
 
 ============================================
