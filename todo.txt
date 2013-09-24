@@ -1,3 +1,4 @@
+! prints footer in announce file even if it finds nothing
 - PreExec <command> : to allow prescanning of file before it's passed to 
   the file area, eg; virus scanning, bbs ad insertion
 - PostExec <command> : run some process if program ends with errorlevel 2
@@ -6,3 +7,25 @@
 - nodelist <filename> : look out for this file and dump it in nodedir
   (as well as normal file base import)
 - headers/footers in announcement
+- commercial paid version with more features. release current as-is but
+  call it stick10f (for freeware).
+- registered version archive will be stick10R.zip (for registered).
+- LDesc y/n
+- make list of all imported files and all imported fileareas, and spit
+  out announcement file in order of area
+- only process first desc line (at the moment, they'll just keep over-
+  writing if there are more than one and the last one will be the keeper)
+- CreateDir true/false - create directories if they don't exist
+- file_id.diz max 45 characters wide, 10 lines
+
+- reg version features:
+  - specify how many Ldesc lines you want to import
+  - preexec/postexec
+  - nodelist importer
+  - customisable headers/footers for announce
+  - template system for announce body
+  - post announce message directly into bbs (eg; via creation of ini's for
+     Mystic MUTIL import)
+  - email announce messages
+  - change date format (for log and announce output)
+  

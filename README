@@ -52,12 +52,12 @@ Options:
 INBOUND <inbound file echo directory>
 AREANAME <file echo name> <BBS destination directory>
 LOGFILE <logfile>
-DEBUG <[yes/no]|[0/1]|[on/off]>
+DEBUG <[yes/no]|[1/0]|[on/off]>
 ANNOUNCE <filename>
 
 
 INBOUND     : this takes one parameter -- the incoming path that your mailer
-              deposits files int.
+              deposits files into.
 AREANAME    : The first parameter is the network's file echo name;
               eg; Agora's BBS Mods echo is called AGN_MODS
               The second parameter is the path you want the files for that
