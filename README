@@ -20,7 +20,7 @@ associated file to the relevant file directory, and that's it.
 It's up to you to import the files into your BBS's file bases, most likely by
 running its mass upload feature.
 
-If Stick exists with an errorlevel of 2, then it has processed some TIC files
+If Stick exits with an errorlevel of 2, then it has processed some TIC files
 and you can run your importer.
 
 eg; a simple bash script to import your files into Mystic might look like:
@@ -75,7 +75,7 @@ STRICTDIZ   : Force strict file_id.diz spec bounds for announcement file.
               This restricts LDesc line lengths to 45 characters.
 QUARANTINE  : Copy all processed *.TIC files into a quarantine area for 
               later checking. 
-              Directories will be created if necessary.
+              Quarantine directory will be created if necessary.
 
 Anything that's not a path-/file-name is case insensitive.
 
