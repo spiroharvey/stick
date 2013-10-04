@@ -14,6 +14,8 @@ It is as dumb as a stick.
 
 ---=[ How dumb is it? ]=---
 
+Well, let's just say it's no contender for SkyNet.
+
 Stick looks for *.tic files in your specified Inbound directory, moves the 
 associated file to the relevant file directory, and that's it.
 
@@ -80,8 +82,9 @@ QUARANTINE  : Copy all processed *.TIC files into a quarantine area for
               Quarantine directory will be created if necessary.
 NODEDIR     : Specifies the directory you will merge all nodelists from.
 NODELIST    : List nodelist files and the file areas they are sourced
-              from. Just specify the filename without the extention and
-              Stick will do the rest.
+              from. Just specify the filename without the extension and
+              Stick will do the rest. It will copy this file before it's 
+              moved into the file areas.
 
 Anything that's not a path-/file-name is case insensitive.
 

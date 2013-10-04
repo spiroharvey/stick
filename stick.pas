@@ -316,7 +316,7 @@ Begin
 			ImportFiles[f] := tic;
 			ImportFiles[f].TicFile := fileInfo.Name;
 			for h := 0 to high(Area) do begin
-				if ImportFiles[f].Area = Area[h].Name then begin
+				if upcase(ImportFiles[f].Area) = upcase(Area[h].Name) then begin
 					Area[h].AreaDesc := ImportFiles[f].AreaDesc;
 					Inc(Area[h].Files);
 				end;
