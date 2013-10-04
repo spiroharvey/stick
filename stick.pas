@@ -9,7 +9,9 @@ Uses	crt,
 Type
 		AreaRec = Record
 			Name	: String;
+			AreaDesc: String;
 			Location: String;
+			Files	: LongInt;
 		End;
 
 		AreaArray = Array of AreaRec;
@@ -22,10 +24,19 @@ Type
 			LDesc	: array [0..9] of String[80];
 			Size	: string;
 			Replaces: String;
+			TicFile	: String;
 		End;
 
+		NodeRec = Record
+			Name	: String;
+			Area	: String;
+		end;
+
+		TicArray = Array of TicRec;
+		NodeArray = Array of NodeRec;
+
 Const
-		Version		: String = '1.1';
+		Version		: String = '1.2';
 
 Var
 		cfgFile		: String = 'stick.cfg';
@@ -36,10 +47,15 @@ Var
 		lf			: Text;
 		quarDir		: String = '';
 		inDir		: String = '';
-		i,j			: integer;
+		nodeDir		: String = '';
+		h,i,j,f,n	: LongInt;
+		nl			: LongInt = 0;
 		Area		: AreaArray;
+		nlSrc,
 		fileInfo	: TSearchRec;
 		tic			: TicRec;
+		ImportFiles	: TicArray;
+		NodeList	: NodeArray;
 		tstr,
 		SrcFile,
 		DstFile		: String;
@@ -59,7 +75,7 @@ Var
 		cf			: Text;
 		cc			: string;
 		tmpline		: string;
-		c,a			: integer;
+		c,a			: LongInt;
 
 Begin
 	a := 0;
@@ -147,6 +163,33 @@ Begin
 				end;
 			end;
 
+			if upcase(leftstr(tmpline,8)) = 'NODEDIR ' then begin
+				nodeDir := copy(tmpline,9,length(tmpline));
+				if RightStr(nodeDir,1) <> '/' then
+					nodeDir := nodeDir + '/';
+				if not DirectoryExists(nodeDir) then begin
+					if not CreateDir(nodeDir) then begin
+						writeln('Can''t create Node Directory: ' + nodeDir);
+						Close(cf);
+						halt(1);
+					end;
+				end;
+			end;
+
+
+			if upcase(leftstr(tmpline,9)) = 'NODELIST ' then begin
+				SetLength(Nodelist,nl+1);
+				for c := 10 to length(tmpline) do begin
+					cc := copy(tmpline,c,1);
+					if cc = ' ' then begin
+						Nodelist[nl].Name := copy(tmpline,10,c-10);
+						break;
+					end;
+				end;
+				Nodelist[nl].Area := copy(tmpline,c+1,length(tmpline));
+				Inc(nl);
+			end;
+
 		end;
 	end else begin
 		writeln('Can''t find config file: ' + cfgFile);
@@ -165,8 +208,8 @@ Procedure ReadTicFile(FN : String);
 Var
 		tf			: Text;
 		tmpline		: string;
-		d			: integer = 0;
-		i			: integer;
+		d			: LongInt = 0;
+		i			: LongInt;
 		
 Begin
 	Assign(tf,FN);
@@ -230,7 +273,9 @@ Begin
 					writeln('          DEBUG      on/off');
 					writeln('          LONGDESC   on/off');
 					writeln('          ANNOUNCE   <filename>');
-					writeln('          QUARANTINE <idirectory>');
+					writeln('          QUARANTINE <directory>');
+					writeln('          NODEDIR    <directory>');
+					writeln('          NODELIST   <filename> <filearea>');
 					writeln();
 					halt(0);
 					end;
@@ -244,10 +289,6 @@ Begin
 	CheckArgs;
 	LoadCfg;
 
-    if Debug then
-	    for i := 0 to high(area) do
-		    writeln('area #' + intToStr(i) + ':' + Area[i].Name + ':' + Area[i].Location + ':');
-
 	DecodeDate(dt,dyr,dmn,ddy);
 	DecodeTime(dt,thr,tmn,tsc,tms);
 
@@ -259,61 +300,28 @@ Begin
 		Rewrite(lf);
 
 
-	// Open Announcement File
-	if announce then begin
-		Assign(af,annFile);
-		if FileExists(annFile) then
-			Append(af)
-		else
-			Rewrite(af);
-	end;
-
 	{$I+}
 	Try
 	if FindFirst (inDir+'*.tic',faAnyFile,fileInfo) = 0 then begin
+		writeln(lf,StringofChar('-',79));
 		write(lf,'Started at: ' + Format('%.4d',[dyr]) + '/' + Format('%.2d',[dmn]) + '/' + Format('%.2d',[ddy]));
 		writeln(lf, ' : ' + Format('%.2d',[thr]) + ':' + Format('%.2d',[tmn]) + ':' + Format('%.2d',[tsc]));
 		writeln(lf,'Checking for TIC files in: ' + inDir);
+		f := 0;
+		gotfile := true;
 		Repeat
 			ReadTicFile(inDir+fileInfo.Name);
 			writeln(lf,'Processing TIC file : ' + fileInfo.Name);
-			SrcFile := inDir+tic.FName;
-			if debug then
-				writeln(lf,'Source File: ' + SrcFile);
-			for i := 0 to high(Area) do begin
-				if UpCase(Area[i].Name) = UpCase(tic.Area) then begin
-					DstFile := Area[i].Location+tic.FName;
-					if announce then begin
-		 				writeln(af,'>Area: ' + upcase(tic.Area) + ' // ' + tic.AreaDesc);
-						writeln(af,' ' + StringOfChar('-',78));
-						write(af,Format('  %0:-15s ',[tic.FName]));
-						write(af,Format(' %0:12s  ',[tic.Size]));
-						writeln(af,tic.Desc);
-						if longdesc then begin
-							for j := 0 to high(tic.LDesc) do begin
-								if tic.LDesc[j] <> '' then
-									writeln(af,StringOfChar(' ',33) + tic.LDesc[j]);
-							end;
-						end;
-						writeln(af,'');
-					end;
-					writeln(lf,'Moving file: "' + tic.FName + '" to area ' + Area[i].Name);
-					if debug then
-						writeln(lf,'Destination File: ' + DstFile);
-					CopyFl(SrcFile,DstFile);
-					if FileExists(DstFile) then begin
-						if quarantine then begin
-						//	CopyFl(SrcFile,				quarDir+tic.FName);
-							CopyFl(inDir+fileInfo.Name,	quarDir+fileInfo.Name);
-						end;
-						DeleteFile(SrcFile);
-						if debug then writeln(lf,'Move successful.');
-						DeleteFile(inDir+fileInfo.Name);
-						if debug then writeln(lf,'Deleted ' + fileInfo.Name);
-						gotfile := true;
-					end;
+			SetLength(ImportFiles,f+1);
+			ImportFiles[f] := tic;
+			ImportFiles[f].TicFile := fileInfo.Name;
+			for h := 0 to high(Area) do begin
+				if ImportFiles[f].Area = Area[h].Name then begin
+					Area[h].AreaDesc := ImportFiles[f].AreaDesc;
+					Inc(Area[h].Files);
 				end;
 			end;
+			Inc(f);
 		Until FindNext(fileInfo) <> 0;
 		writeln(lf,'');
 	end;
@@ -323,6 +331,68 @@ Begin
 		writeln('Can''t find ' + inDir+'*.tic');
 		end;
 	End;
+
+
+	if gotfile and announce then begin
+		Assign(af,annFile);
+		if FileExists(annFile) then
+			Append(af)
+		else
+			Rewrite(af);
+
+		for i := 0 to high(Area) do begin
+			if Area[i].Files > 0 then begin
+				if announce then begin
+					writeln(af,'>Area: ' + upcase(Area[i].Name) + ' // ' + Area[i].AreaDesc);
+					writeln(af,' ' + StringOfChar('-',78));
+				end;
+				if debug then begin
+					writeln(lf,'');
+					writeln(lf,'Area: ' + Area[i].Name);
+				end;
+				for f := 0 to high(ImportFiles) do begin
+					for n := 0 to high(nodelist) do begin
+						if (nodelist[n].Name = leftstr(ImportFiles[f].FName,length(nodelist[n].Name))) and (UpCase(nodelist[n].Area) = UpCase(Area[i].Name)) then begin
+							CopyFl(inDir+ImportFiles[f].FName,nodeDir+ImportFiles[f].FName);
+							writeln(lf,'Copied nodelist: ' + ImportFiles[f].FName);
+							if debug then 
+								writeln(lf,'Source Nodelist: ' + inDir + ImportFiles[f].FName + ' -> ' + nodeDir);
+						end;
+					end;
+					if UpCase(Area[i].Name) = UpCase(ImportFiles[f].Area) then begin
+						SrcFile := inDir+ImportFiles[f].FName;
+						if debug then
+							writeln(lf,'Source File: ' + SrcFile);
+						DstFile := Area[i].Location+ImportFiles[f].FName;
+						if announce then begin
+							write(af,Format('  %0:-15s ',[ImportFiles[f].FName]));
+							write(af,Format(' %0:12s  ',[ImportFiles[f].Size]));
+							writeln(af,ImportFiles[f].Desc);
+							if longdesc then begin
+								for j := 0 to high(ImportFiles[f].LDesc) do begin
+									if ImportFiles[f].LDesc[j] <> '' then
+										writeln(af,StringOfChar(' ',33) + ImportFiles[f].LDesc[j]);
+								end;
+							end;
+							writeln(af,'');
+						end;
+						writeln(lf,'Moving file: "' + ImportFiles[f].FName + '" to area ' + Area[i].Name);
+						if debug then
+							writeln(lf,'Destination File: ' + DstFile);
+						CopyFl(SrcFile,DstFile);
+						if FileExists(DstFile) then begin
+							if quarantine then
+								CopyFl(inDir+ImportFiles[f].TicFile,	quarDir+ImportFiles[f].TicFile);
+							DeleteFile(SrcFile);
+							if debug then writeln(lf,'Move successful.');
+							DeleteFile(inDir+ImportFiles[f].TicFile);
+							if debug then writeln(lf,'Deleted ' + ImportFiles[f].TicFile);
+						end;
+					end;
+				end;
+			end;
+		end;
+	end;
 	Close(lf);
 
 	if announce and gotfile then begin
@@ -335,7 +405,8 @@ Begin
 		writeln(af,'');
 	end;
 
-	Close(af);
+	if gotfile and announce then 
+		Close(af);
 
 	if gotfile then
 		halt(2);

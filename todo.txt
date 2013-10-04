@@ -2,9 +2,6 @@
   the file area, eg; virus scanning, bbs ad insertion
 - PostExec <command> : run some process if program ends with errorlevel 2
   eg; has processed something
-- nodedir <dir> : directory dump incoming nodelist files
-- nodelist <filename> : look out for this file and dump it in nodedir
-  (as well as normal file base import) check for file.[z0-9][0-9][0-9]
 - headers/footers in announcement
 - commercial paid version with more features. release current as-is but
   call it stick10f (for freeware).
@@ -20,7 +17,6 @@
 
 - reg version features:
   - preexec/postexec
-  - nodelist importer
   - customisable headers/footers for announce
   - template system for announce body
   - post announce message directly into bbs (eg; via creation of ini's for

@@ -1,4 +1,4 @@
-Stick v1.1
+Stick v1.2
 
 Copyright (c) 2013 SDG
 Written by Spiro Dotgeek
@@ -54,6 +54,8 @@ ANNOUNCE <filename>
 LONGDESC <on/off>
 STRICTDIZ <on/off>
 QUARANTINE <directory>
+NODEDIR	<directory>
+NODELIST <filename> <filearea>
 
 
 INBOUND     : This takes one parameter -- the incoming path that your mailer
@@ -76,6 +78,10 @@ STRICTDIZ   : Force strict file_id.diz spec bounds for announcement file.
 QUARANTINE  : Copy all processed *.TIC files into a quarantine area for 
               later checking. 
               Quarantine directory will be created if necessary.
+NODEDIR     : Specifies the directory you will merge all nodelists from.
+NODELIST    : List nodelist files and the file areas they are sourced
+              from. Just specify the filename without the extention and
+              Stick will do the rest.
 
 Anything that's not a path-/file-name is case insensitive.
 
