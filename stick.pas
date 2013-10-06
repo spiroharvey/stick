@@ -352,7 +352,7 @@ Begin
 				end;
 				for f := 0 to high(ImportFiles) do begin
 					for n := 0 to high(nodelist) do begin
-						if (nodelist[n].Name = leftstr(ImportFiles[f].FName,length(nodelist[n].Name))) and (UpCase(nodelist[n].Area) = UpCase(Area[i].Name)) then begin
+						if (nodelist[n].Name = leftstr(ImportFiles[f].FName,length(nodelist[n].Name))) and (UpCase(nodelist[n].Area) = UpCase(ImportFiles[f].Area)) and (upcase(nodelist[n].Area) = UpCase(Area[i].Name)) then begin
 							CopyFl(inDir+ImportFiles[f].FName,nodeDir+ImportFiles[f].FName);
 							writeln(lf,'Copied nodelist: ' + ImportFiles[f].FName);
 							if debug then 
