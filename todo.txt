@@ -1,3 +1,4 @@
+! case sensitive file search
 - PreExec <command> : to allow prescanning of file before it's passed to 
   the file area, eg; virus scanning, bbs ad insertion
 - PostExec <command> : run some process if program ends with errorlevel 2

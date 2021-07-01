@@ -36,7 +36,8 @@ Type
 		NodeArray = Array of NodeRec;
 
 Const
-		Version		: String = '1.2';
+		Version		: String = '1.2a';
+		Copyright	: String = '2014 by Spiro Dotgeek';
 
 Var
 		cfgFile		: String = 'stick.cfg';
@@ -219,8 +220,11 @@ Begin
 	while not eof(tf) do begin
 		readln(tf,tmpline);
 
-		if upcase(leftstr(tmpline,5)) = 'FILE ' then
+		if upcase(leftstr(tmpline,5)) = 'FILE ' then begin
 			tic.FName := copy(tmpline,6,length(tmpline));
+			if debug then
+				writeln(lf, ' ** got file: ' + tic.FName);
+		end;
 		if upcase(leftstr(tmpline,5)) = 'AREA ' then
 			tic.Area := copy(tmpline,6,length(tmpline));
 		if upcase(leftstr(tmpline,9)) = 'AREADESC ' then
@@ -262,7 +266,7 @@ Begin
 			'--help',
 			'-h' : begin
 					writeln();
-					writeln('stick v' + Version + ' - (c) 2013 by Spiro Dotgeek');
+					writeln('stick v' + Version + ' - (c) ' + Copyright);
 					writeln('  Usage:');
 					writeln('          stick [-c configfile]');
 					writeln('                [-d] to set debug mode');
@@ -379,11 +383,29 @@ Begin
 						writeln(lf,'Moving file: "' + ImportFiles[f].FName + '" to area ' + Area[i].Name);
 						if debug then
 							writeln(lf,'Destination File: ' + DstFile);
+						{$I+}
+						Try
 						CopyFl(SrcFile,DstFile);
+						Except
+						on E: EFOpenError do begin
+							writeln(lf, 'ERROR: Source File ' + SrcFile + ' doesn''t exist');
+							continue;
+							end;
+						End;
+
+						
 						if FileExists(DstFile) then begin
 							if quarantine then
 								CopyFl(inDir+ImportFiles[f].TicFile,	quarDir+ImportFiles[f].TicFile);
+							{$I+}
+							Try
 							DeleteFile(SrcFile);
+							Except
+							on E: EFOpenError do begin
+								writeln(lf, 'ERROR: Source File ' + SrcFile + ' doesn''t exist. Can''t delete.');
+								continue;
+								end;
+							End;
 							if debug then writeln(lf,'Move successful.');
 							DeleteFile(inDir+ImportFiles[f].TicFile);
 							if debug then writeln(lf,'Deleted ' + ImportFiles[f].TicFile);
@@ -398,7 +420,7 @@ Begin
 	if announce and gotfile then begin
 		writeln(af,' ' + StringOfChar('-',78));
 		writeln(af,'');
-		tstr := 'Files processed by Stick v' + Version + ' (c) 2013 by SDG';
+		tstr := 'Files processed by Stick v' + Version + ' (c) ' + Copyright;
 		writeln(af,StringOfChar(' ',78-length(tstr)) + tstr);
 		tstr := '(spiro@oldschool.geek.nz)';
 		writeln(af,StringOfChar(' ',78-length(tstr)) + tstr);
